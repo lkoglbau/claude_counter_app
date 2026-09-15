@@ -2,6 +2,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -9,7 +10,12 @@ import {
 
 import type { Counter, CounterDraft } from '@/types/counter';
 import { createId } from '@/utils/id';
-import { loadCounters, saveCounters } from './countersRepo';
+import {
+  deleteCounterRow,
+  fetchCounters,
+  insertCounter,
+  updateCounterRow,
+} from './countersRepo';
 
 type CountersContextValue = {
   counters: Counter[];
@@ -27,14 +33,13 @@ function sortCounters(list: Counter[]): Counter[] {
 }
 
 export function CountersProvider({ children }: { children: ReactNode }) {
-  // Synchronous hydration from SQLite-backed storage — no loading flash.
-  const [counters, setCounters] = useState<Counter[]>(() => sortCounters(loadCounters()));
+  const [counters, setCounters] = useState<Counter[]>([]);
 
-  // Single choke point: update React state and persist in the same step.
-  const commit = useCallback((next: Counter[]) => {
-    const sorted = sortCounters(next);
-    setCounters(sorted);
-    saveCounters(sorted);
+  // Initial hydration from Supabase — async, so the list starts empty for one frame.
+  useEffect(() => {
+    fetchCounters()
+      .then((loaded) => setCounters(sortCounters(loaded)))
+      .catch((error) => console.error('Failed to load counters from Supabase', error));
   }, []);
 
   const getCounter = useCallback(
@@ -42,48 +47,45 @@ export function CountersProvider({ children }: { children: ReactNode }) {
     [counters],
   );
 
-  const addCounter = useCallback(
-    (draft: CounterDraft): Counter => {
-      const now = new Date().toISOString();
-      const counter: Counter = {
-        id: createId(),
-        name: draft.name.trim(),
-        startDate: draft.startDate,
-        colorId: draft.colorId,
-        createdAt: now,
-        updatedAt: now,
-      };
-      commit([counter, ...counters]);
-      return counter;
-    },
-    [counters, commit],
-  );
+  // Optimistic local update, persisted to Supabase in the background.
+  const addCounter = useCallback((draft: CounterDraft): Counter => {
+    const now = new Date().toISOString();
+    const counter: Counter = {
+      id: createId(),
+      name: draft.name.trim(),
+      startDate: draft.startDate,
+      colorId: draft.colorId,
+      createdAt: now,
+      updatedAt: now,
+    };
+    setCounters((prev) => sortCounters([counter, ...prev]));
+    insertCounter(counter).catch((error) =>
+      console.error('Failed to save counter to Supabase', error),
+    );
+    return counter;
+  }, []);
 
-  const updateCounter = useCallback(
-    (id: string, draft: CounterDraft) => {
-      commit(
-        counters.map((c) =>
-          c.id === id
-            ? {
-                ...c,
-                name: draft.name.trim(),
-                startDate: draft.startDate,
-                colorId: draft.colorId,
-                updatedAt: new Date().toISOString(),
-              }
-            : c,
+  const updateCounter = useCallback((id: string, draft: CounterDraft) => {
+    const updatedAt = new Date().toISOString();
+    const name = draft.name.trim();
+    setCounters((prev) =>
+      sortCounters(
+        prev.map((c) =>
+          c.id === id ? { ...c, name, startDate: draft.startDate, colorId: draft.colorId, updatedAt } : c,
         ),
-      );
-    },
-    [counters, commit],
-  );
+      ),
+    );
+    updateCounterRow(id, { name, startDate: draft.startDate, colorId: draft.colorId, updatedAt }).catch(
+      (error) => console.error('Failed to update counter in Supabase', error),
+    );
+  }, []);
 
-  const removeCounter = useCallback(
-    (id: string) => {
-      commit(counters.filter((c) => c.id !== id));
-    },
-    [counters, commit],
-  );
+  const removeCounter = useCallback((id: string) => {
+    setCounters((prev) => prev.filter((c) => c.id !== id));
+    deleteCounterRow(id).catch((error) =>
+      console.error('Failed to delete counter in Supabase', error),
+    );
+  }, []);
 
   const value = useMemo<CountersContextValue>(
     () => ({ counters, getCounter, addCounter, updateCounter, removeCounter }),

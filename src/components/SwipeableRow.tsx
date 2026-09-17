@@ -1,6 +1,6 @@
 import * as Haptics from 'expo-haptics';
 import { useRef } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import ReanimatedSwipeable, {
   type SwipeableMethods,
 } from 'react-native-gesture-handler/ReanimatedSwipeable';
@@ -26,6 +26,21 @@ export function SwipeableRow({ children, itemName, onDelete }: Props) {
 
   const confirmDelete = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    // react-native-web has no native alert dialog — Alert.alert() is a silent
+    // no-op there, so the confirmation (and the delete it gates) must go
+    // through window.confirm instead.
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm(`„${itemName}" wird dauerhaft entfernt.`);
+      if (confirmed) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        onDelete();
+      } else {
+        ref.current?.close();
+      }
+      return;
+    }
+
     Alert.alert(
       'Counter löschen?',
       `„${itemName}" wird dauerhaft entfernt.`,

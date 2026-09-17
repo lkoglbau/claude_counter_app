@@ -14,6 +14,7 @@ type CounterRow = {
   color_id: string;
   created_at: string;
   updated_at: string;
+  user_id: string | null;
 };
 
 function rowToCounter(row: CounterRow): Counter | null {
@@ -35,6 +36,10 @@ export async function fetchCounters(): Promise<Counter[]> {
 }
 
 export async function insertCounter(counter: Counter): Promise<void> {
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError) throw userError;
+  if (!userData.user) throw new Error('Not authenticated');
+
   const { error } = await supabase.from(TABLE).insert({
     id: counter.id,
     name: counter.name,
@@ -42,8 +47,25 @@ export async function insertCounter(counter: Counter): Promise<void> {
     color_id: counter.colorId,
     created_at: counter.createdAt,
     updated_at: counter.updatedAt,
+    user_id: userData.user.id,
   });
   if (error) throw error;
+}
+
+/**
+ * One-time migration helper: assigns any counter that predates per-user data
+ * (user_id still null, e.g. the original seed data) to whoever signs in first.
+ * A no-op once every row has an owner.
+ */
+export async function claimOrphanCounters(): Promise<void> {
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData.user) return;
+
+  const { error } = await supabase
+    .from(TABLE)
+    .update({ user_id: userData.user.id })
+    .is('user_id', null);
+  if (error) console.error('Failed to claim orphaned counters', error);
 }
 
 export async function updateCounterRow(

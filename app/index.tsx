@@ -12,6 +12,7 @@ import { CounterCard } from '@/components/CounterCard';
 import { EmptyState } from '@/components/EmptyState';
 import { SwipeableRow } from '@/components/SwipeableRow';
 import { useCounters } from '@/hooks/useCounters';
+import { useAuth } from '@/store/AuthProvider';
 import { RADIUS, SPACING, TYPOGRAPHY } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
@@ -20,6 +21,7 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { counters, removeCounter } = useCounters();
+  const { signOut } = useAuth();
 
   const openNew = () => {
     Haptics.selectionAsync();
@@ -30,17 +32,27 @@ export default function HomeScreen() {
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: insets.top + SPACING.sm }]}>
         <Text style={[styles.title, { color: colors.text }]}>Meine Counter</Text>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Neuen Counter anlegen"
-          onPress={openNew}
-          style={({ pressed }) => [
-            styles.addButton,
-            { backgroundColor: colors.tint, opacity: pressed ? 0.85 : 1 },
-          ]}
-        >
-          <Text style={[styles.addGlyph, { color: colors.onTint }]}>+</Text>
-        </Pressable>
+        <View style={styles.headerActions}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Abmelden"
+            onPress={() => signOut()}
+            style={({ pressed }) => [styles.logoutButton, { opacity: pressed ? 0.6 : 1 }]}
+          >
+            <Text style={[styles.logoutLabel, { color: colors.textSecondary }]}>Abmelden</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Neuen Counter anlegen"
+            onPress={openNew}
+            style={({ pressed }) => [
+              styles.addButton,
+              { backgroundColor: colors.tint, opacity: pressed ? 0.85 : 1 },
+            ]}
+          >
+            <Text style={[styles.addGlyph, { color: colors.onTint }]}>+</Text>
+          </Pressable>
+        </View>
       </View>
 
       {counters.length === 0 ? (
@@ -90,6 +102,17 @@ const styles = StyleSheet.create({
   },
   title: {
     ...TYPOGRAPHY.largeTitle,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.lg,
+  },
+  logoutButton: {
+    paddingVertical: SPACING.xs,
+  },
+  logoutLabel: {
+    ...TYPOGRAPHY.subhead,
   },
   addButton: {
     width: 40,

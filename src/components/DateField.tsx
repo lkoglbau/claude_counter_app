@@ -8,6 +8,9 @@ import { RADIUS, SPACING, TYPOGRAPHY } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { formatHumanDate, fromISODate, toISODate, todayISODate } from '@/utils/date';
 
+const WEB_FONT =
+  '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+
 type Props = {
   label: string;
   value: string; // YYYY-MM-DD
@@ -37,7 +40,6 @@ export function DateField({ label, value, onChange, minimumDate }: Props) {
         style={[styles.row, { backgroundColor: colors.fieldBackground }]}
         accessibilityLabel={`${label}: ${formatHumanDate(value)}`}
       >
-        <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>
         {createElement('input', {
           type: 'date',
           value,
@@ -49,18 +51,23 @@ export function DateField({ label, value, onChange, minimumDate }: Props) {
             if (next && next >= '1900-01-01') onChange(next);
           },
           style: {
-            font: 'inherit',
+            // Same face as the rest of the app (react-native-web's default
+            // stack) — an <input> would otherwise fall back to the browser font.
+            fontFamily: WEB_FONT,
+            fontSize: TYPOGRAPHY.body.fontSize,
             fontWeight: 600,
-            fontSize: 17,
+            letterSpacing: TYPOGRAPHY.body.letterSpacing,
             color: colors.text,
             colorScheme: scheme,
             background: 'transparent',
             border: 'none',
             outline: 'none',
-            textAlign: 'right',
+            padding: 0,
+            textAlign: 'left',
             cursor: 'pointer',
           },
         })}
+        <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>
       </View>
     );
   }
@@ -76,10 +83,10 @@ export function DateField({ label, value, onChange, minimumDate }: Props) {
           { backgroundColor: colors.fieldBackground, opacity: pressed ? 0.7 : 1 },
         ]}
       >
-        <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>
         <Text style={[styles.value, { color: open ? colors.tint : colors.text }]}>
           {formatHumanDate(value)}
         </Text>
+        <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>
       </Pressable>
 
       {open && (

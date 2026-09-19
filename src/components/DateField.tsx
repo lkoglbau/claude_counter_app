@@ -1,12 +1,12 @@
 import DateTimePicker, {
   type DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
-import { useState } from 'react';
+import { createElement, useState } from 'react';
 import { LayoutAnimation, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { RADIUS, SPACING, TYPOGRAPHY } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
-import { formatHumanDate, fromISODate, toISODate } from '@/utils/date';
+import { formatHumanDate, fromISODate, toISODate, todayISODate } from '@/utils/date';
 
 type Props = {
   label: string;
@@ -28,6 +28,42 @@ export function DateField({ label, value, onChange, minimumDate }: Props) {
     if (Platform.OS !== 'ios') setOpen(false);
     if (date) onChange(toISODate(date));
   };
+
+  // The community datetimepicker has no web implementation (renders nothing),
+  // so on web use the browser's native <input type="date">.
+  if (Platform.OS === 'web') {
+    return (
+      <View
+        style={[styles.row, { backgroundColor: colors.fieldBackground }]}
+        accessibilityLabel={`${label}: ${formatHumanDate(value)}`}
+      >
+        <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>
+        {createElement('input', {
+          type: 'date',
+          value,
+          min: minimumDate,
+          max: todayISODate(),
+          onChange: (e: { target: { value: string } }) => {
+            // Empty (cleared) or a half-typed year like 0002: ignore until complete.
+            const next = e.target.value;
+            if (next && next >= '1900-01-01') onChange(next);
+          },
+          style: {
+            font: 'inherit',
+            fontWeight: 600,
+            fontSize: 17,
+            color: colors.text,
+            colorScheme: scheme,
+            background: 'transparent',
+            border: 'none',
+            outline: 'none',
+            textAlign: 'right',
+            cursor: 'pointer',
+          },
+        })}
+      </View>
+    );
+  }
 
   return (
     <View>

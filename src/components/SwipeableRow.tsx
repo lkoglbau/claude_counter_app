@@ -1,17 +1,18 @@
 import * as Haptics from 'expo-haptics';
 import { useRef } from 'react';
-import { Alert, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import ReanimatedSwipeable, {
   type SwipeableMethods,
 } from 'react-native-gesture-handler/ReanimatedSwipeable';
 
 import { RADIUS, SPACING, TYPOGRAPHY } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { confirmDestructive, showError } from '@/utils/confirm';
 
 type Props = {
   children: React.ReactNode;
   itemName: string;
-  onDelete: () => void;
+  onDelete: () => void | Promise<void>;
 };
 
 const ACTION_WIDTH = 92;
@@ -24,39 +25,24 @@ export function SwipeableRow({ children, itemName, onDelete }: Props) {
   const { colors } = useTheme();
   const ref = useRef<SwipeableMethods>(null);
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-
-    // react-native-web has no native alert dialog — Alert.alert() is a silent
-    // no-op there, so the confirmation (and the delete it gates) must go
-    // through window.confirm instead.
-    if (Platform.OS === 'web') {
-      const confirmed = window.confirm(`„${itemName}" wird dauerhaft entfernt.`);
-      if (confirmed) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        onDelete();
-      } else {
-        ref.current?.close();
-      }
+    const confirmed = await confirmDestructive({
+      title: 'Counter löschen?',
+      message: `„${itemName}" wird dauerhaft entfernt.`,
+    });
+    if (!confirmed) {
+      ref.current?.close();
       return;
     }
-
-    Alert.alert(
-      'Counter löschen?',
-      `„${itemName}" wird dauerhaft entfernt.`,
-      [
-        { text: 'Abbrechen', style: 'cancel', onPress: () => ref.current?.close() },
-        {
-          text: 'Löschen',
-          style: 'destructive',
-          onPress: () => {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            onDelete();
-          },
-        },
-      ],
-      { cancelable: true, onDismiss: () => ref.current?.close() },
-    );
+    try {
+      await onDelete();
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (error) {
+      console.error('Failed to delete counter', error);
+      ref.current?.close();
+      showError('Löschen fehlgeschlagen', error instanceof Error ? error.message : String(error));
+    }
   };
 
   const renderRightActions = () => (

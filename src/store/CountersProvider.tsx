@@ -8,13 +8,16 @@ import {
   type ReactNode,
 } from 'react';
 
-import type { Counter, CounterDraft } from '@/types/counter';
+import type { Counter, CounterDraft, Slip, SlipDraft } from '@/types/counter';
 import { createId } from '@/utils/id';
 import {
   deleteCounterRow,
+  deleteSlipRow,
   fetchCounters,
   insertCounter,
+  insertSlip,
   updateCounterRow,
+  updateSlipRow,
 } from './countersRepo';
 
 type CountersContextValue = {
@@ -22,10 +25,18 @@ type CountersContextValue = {
   getCounter: (id: string) => Counter | undefined;
   addCounter: (draft: CounterDraft) => Counter;
   updateCounter: (id: string, draft: CounterDraft) => void;
-  removeCounter: (id: string) => void;
+  /** Resolves once the row is really gone in Supabase; rejects otherwise. */
+  removeCounter: (id: string) => Promise<void>;
+  addSlip: (counterId: string, draft: SlipDraft) => Promise<void>;
+  updateSlip: (counterId: string, slipId: string, draft: SlipDraft) => Promise<void>;
+  removeSlip: (counterId: string, slipId: string) => Promise<void>;
 };
 
 const CountersContext = createContext<CountersContextValue | null>(null);
+
+function sortSlips(slips: Slip[]): Slip[] {
+  return [...slips].sort((a, b) => a.date.localeCompare(b.date));
+}
 
 /** Newest first, so a freshly added counter appears at the top of the list. */
 function sortCounters(list: Counter[]): Counter[] {
@@ -57,6 +68,7 @@ export function CountersProvider({ children }: { children: ReactNode }) {
       colorId: draft.colorId,
       createdAt: now,
       updatedAt: now,
+      slips: [],
     };
     setCounters((prev) => sortCounters([counter, ...prev]));
     insertCounter(counter).catch((error) =>
@@ -80,16 +92,64 @@ export function CountersProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
-  const removeCounter = useCallback((id: string) => {
+  // Persist first, then drop from local state: the caller navigates only after
+  // the delete really happened, and a failure is surfaced instead of swallowed.
+  const removeCounter = useCallback(async (id: string) => {
+    await deleteCounterRow(id);
     setCounters((prev) => prev.filter((c) => c.id !== id));
-    deleteCounterRow(id).catch((error) =>
-      console.error('Failed to delete counter in Supabase', error),
+  }, []);
+
+  const patchSlips = useCallback((counterId: string, fn: (slips: Slip[]) => Slip[]) => {
+    setCounters((prev) =>
+      prev.map((c) => (c.id === counterId ? { ...c, slips: sortSlips(fn(c.slips)) } : c)),
     );
   }, []);
 
+  const addSlip = useCallback(
+    async (counterId: string, draft: SlipDraft) => {
+      const slip: Slip = {
+        id: createId(),
+        date: draft.date,
+        note: draft.note?.trim() || undefined,
+        createdAt: new Date().toISOString(),
+      };
+      await insertSlip(counterId, slip);
+      patchSlips(counterId, (slips) => [...slips, slip]);
+    },
+    [patchSlips],
+  );
+
+  const updateSlip = useCallback(
+    async (counterId: string, slipId: string, draft: SlipDraft) => {
+      const note = draft.note?.trim() || undefined;
+      await updateSlipRow(slipId, { date: draft.date, note });
+      patchSlips(counterId, (slips) =>
+        slips.map((s) => (s.id === slipId ? { ...s, date: draft.date, note } : s)),
+      );
+    },
+    [patchSlips],
+  );
+
+  const removeSlip = useCallback(
+    async (counterId: string, slipId: string) => {
+      await deleteSlipRow(slipId);
+      patchSlips(counterId, (slips) => slips.filter((s) => s.id !== slipId));
+    },
+    [patchSlips],
+  );
+
   const value = useMemo<CountersContextValue>(
-    () => ({ counters, getCounter, addCounter, updateCounter, removeCounter }),
-    [counters, getCounter, addCounter, updateCounter, removeCounter],
+    () => ({
+      counters,
+      getCounter,
+      addCounter,
+      updateCounter,
+      removeCounter,
+      addSlip,
+      updateSlip,
+      removeSlip,
+    }),
+    [counters, getCounter, addCounter, updateCounter, removeCounter, addSlip, updateSlip, removeSlip],
   );
 
   return <CountersContext.Provider value={value}>{children}</CountersContext.Provider>;

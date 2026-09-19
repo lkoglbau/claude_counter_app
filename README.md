@@ -51,7 +51,10 @@ type Counter = {
   colorId: CounterColorId; // Referenz in die Palette, nicht Roh-Hex
   createdAt: string;   // ISO-DateTime
   updatedAt: string;   // ISO-DateTime
+  slips: Slip[];       // "Ausrutscher", aufsteigend nach Datum; Tabelle `slips` in Supabase
 };
+
+type Slip = { id: string; date: string; note?: string; createdAt: string };
 ```
 
 ## App-Store-Vorbereitung

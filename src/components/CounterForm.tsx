@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -26,9 +26,11 @@ type Props = {
   submitLabel: string;
   onSubmit: (draft: CounterDraft) => void;
   onDelete?: () => void;
+  /** Rendered above the fields, e.g. the streak timeline in the detail view. */
+  header?: ReactNode;
 };
 
-export function CounterForm({ initialValue, submitLabel, onSubmit, onDelete }: Props) {
+export function CounterForm({ initialValue, submitLabel, onSubmit, onDelete, header }: Props) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
 
@@ -60,6 +62,8 @@ export function CounterForm({ initialValue, submitLabel, onSubmit, onDelete }: P
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="interactive"
       >
+        {header}
+
         <View style={styles.field}>
           <Text style={[styles.label, { color: colors.textSecondary }]}>Name</Text>
           <TextInput

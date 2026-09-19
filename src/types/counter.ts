@@ -9,6 +9,19 @@ import { COLOR_IDS, type CounterColorId } from '@/theme/palette';
  *   keeps stored data portable if the palette is re-tuned and lets each color
  *   carry its own light/dark variants.
  */
+export type Slip = {
+  id: string;
+  date: string; // YYYY-MM-DD
+  note?: string; // optional free-text reason, e.g. "Firmenfeier"
+  createdAt: string; // ISO-8601 datetime
+};
+
+/** Fields the user edits when adding / editing a slip. */
+export type SlipDraft = {
+  date: string; // YYYY-MM-DD
+  note?: string;
+};
+
 export type Counter = {
   id: string;
   name: string;
@@ -16,6 +29,7 @@ export type Counter = {
   colorId: CounterColorId;
   createdAt: string; // ISO-8601 datetime
   updatedAt: string; // ISO-8601 datetime
+  slips: Slip[]; // ascending by date; startDate itself never changes
 };
 
 /** Fields the user actually edits in the create / edit form. */
@@ -42,6 +56,7 @@ export function isValidCounter(value: unknown): value is Counter {
     DATE_ONLY.test(c.startDate) &&
     isColorId(c.colorId) &&
     typeof c.createdAt === 'string' &&
-    typeof c.updatedAt === 'string'
+    typeof c.updatedAt === 'string' &&
+    Array.isArray(c.slips)
   );
 }

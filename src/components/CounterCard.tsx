@@ -6,6 +6,7 @@ import { useTheme } from '@/theme/useTheme';
 import type { Counter } from '@/types/counter';
 import { formatHumanDate } from '@/utils/date';
 import { useDaysSince } from '@/hooks/useDaysSince';
+import { lastEventDate } from '@/utils/timeline';
 
 type Props = {
   counter: Counter;
@@ -15,7 +16,9 @@ type Props = {
 export function CounterCard({ counter, onPress }: Props) {
   const { colors, scheme } = useTheme();
   const swatch = getSwatch(counter.colorId, scheme);
-  const days = useDaysSince(counter.startDate);
+  // Streak runs from the last slip, or from the start date if there is none.
+  const since = lastEventDate(counter);
+  const days = useDaysSince(since);
   const displayDays = Math.max(days, 0);
 
   return (
@@ -38,7 +41,7 @@ export function CounterCard({ counter, onPress }: Props) {
           {counter.name}
         </Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-          {days <= 0 ? 'seit heute' : `seit ${formatHumanDate(counter.startDate)}`}
+          {days <= 0 ? 'seit heute' : `seit ${formatHumanDate(since)}`}
         </Text>
       </View>
 

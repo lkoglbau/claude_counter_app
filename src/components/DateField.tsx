@@ -12,9 +12,10 @@ type Props = {
   label: string;
   value: string; // YYYY-MM-DD
   onChange: (isoDate: string) => void;
+  minimumDate?: string; // YYYY-MM-DD
 };
 
-export function DateField({ label, value, onChange }: Props) {
+export function DateField({ label, value, onChange, minimumDate }: Props) {
   const { colors, scheme } = useTheme();
   const [open, setOpen] = useState(false);
 
@@ -52,6 +53,7 @@ export function DateField({ label, value, onChange }: Props) {
             mode="date"
             display={Platform.OS === 'ios' ? 'inline' : 'default'}
             maximumDate={new Date()}
+            minimumDate={minimumDate ? fromISODate(minimumDate) : undefined}
             onChange={handleChange}
             themeVariant={scheme}
             accentColor={colors.tint}

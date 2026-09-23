@@ -11,12 +11,17 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/services/supabaseClient';
 import { claimOrphanCounters } from './countersRepo';
 
-// Marks a freshly-registered user id as "hasn't seen the onboarding info yet".
+// Marks a freshly-registered email as "hasn't seen the onboarding info yet".
 // Persisted (not just in-memory) because SIGNED_IN for a signup can happen
 // later, in a different app session, if Supabase ever requires email
-// confirmation. Keyed by user id so it can never leak onboarding to a
-// different, already-existing user who signs in on the same device.
-const PENDING_ONBOARDING_KEY = '@days-since/pending-onboarding-user-id';
+// confirmation. Keyed by email (not user id) because that's the only
+// identifier known *before* calling signUp() - and it must be written
+// before that call: supabase-js emits SIGNED_IN from inside signUp()
+// itself (awaited before signUp()'s promise resolves) when email
+// confirmation is off, i.e. before any code after `await signUp(...)` in
+// this file gets to run. Writing the marker only after that await would
+// always lose the race against the SIGNED_IN handler's read below.
+const PENDING_ONBOARDING_EMAIL_KEY = '@days-since/pending-onboarding-email';
 
 type AuthContextValue = {
   session: Session | null;
@@ -49,14 +54,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.error('Failed to claim orphaned counters', error),
         );
 
-        const userId = newSession.user.id;
-        AsyncStorage.getItem(PENDING_ONBOARDING_KEY)
-          .then((pendingUserId) => {
-            if (pendingUserId === userId) {
-              setShowOnboarding(true);
-            }
-          })
-          .catch((error) => console.error('Failed to read onboarding flag', error));
+        const userEmail = newSession.user.email?.toLowerCase();
+        if (userEmail) {
+          AsyncStorage.getItem(PENDING_ONBOARDING_EMAIL_KEY)
+            .then((pendingEmail) => {
+              if (pendingEmail && pendingEmail === userEmail) {
+                setShowOnboarding(true);
+              }
+            })
+            .catch((error) => console.error('Failed to read onboarding flag', error));
+        }
       }
     });
 
@@ -69,12 +76,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signUp = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    const normalizedEmail = email.trim().toLowerCase();
 
-    if (!error && data.user) {
-      // Consumed on the next SIGNED_IN event for this user id.
-      AsyncStorage.setItem(PENDING_ONBOARDING_KEY, data.user.id).catch((e) =>
-        console.error('Failed to persist onboarding flag', e),
+    // Must be written *before* calling signUp() - see the comment on
+    // PENDING_ONBOARDING_EMAIL_KEY above for why.
+    try {
+      await AsyncStorage.setItem(PENDING_ONBOARDING_EMAIL_KEY, normalizedEmail);
+    } catch (e) {
+      console.error('Failed to persist onboarding flag', e);
+    }
+
+    const { error } = await supabase.auth.signUp({ email, password });
+
+    if (error) {
+      // Registration failed - clear the marker so it can't wrongly show
+      // onboarding to a later, unrelated successful sign-in with this email.
+      AsyncStorage.removeItem(PENDING_ONBOARDING_EMAIL_KEY).catch((e) =>
+        console.error('Failed to clear onboarding flag', e),
       );
     }
 
@@ -87,7 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const dismissOnboarding = () => {
     setShowOnboarding(false);
-    AsyncStorage.removeItem(PENDING_ONBOARDING_KEY).catch((e) =>
+    AsyncStorage.removeItem(PENDING_ONBOARDING_EMAIL_KEY).catch((e) =>
       console.error('Failed to clear onboarding flag', e),
     );
   };

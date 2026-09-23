@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { OnboardingInfoModal } from '@/components/OnboardingInfoModal';
 import { AuthProvider, useAuth } from '@/store/AuthProvider';
 import { CountersProvider } from '@/store/CountersProvider';
 import { useTheme } from '@/theme/useTheme';
@@ -15,7 +16,7 @@ SplashScreen.preventAutoHideAsync();
 
 function AppShell() {
   const { colors, scheme } = useTheme();
-  const { session, loading } = useAuth();
+  const { session, loading, showOnboarding, dismissOnboarding } = useAuth();
 
   useEffect(() => {
     if (!loading) {
@@ -58,6 +59,7 @@ function AppShell() {
           options={{ presentation: 'modal', title: 'Counter bearbeiten' }}
         />
       </Stack>
+      <OnboardingInfoModal visible={showOnboarding} onClose={dismissOnboarding} />
     </CountersProvider>
   );
 }

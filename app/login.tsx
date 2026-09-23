@@ -73,8 +73,13 @@ export default function LoginScreen() {
       >
         <View style={styles.header}>
           <Text style={[styles.title, { color: colors.text }]}>Days Since</Text>
+          <Text style={[styles.tagline, { color: colors.textSecondary }]}>
+            Zähle die Tage seit dem Aufhören – ein Ausrutscher startet den Zähler neu.
+          </Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            {mode === 'signIn' ? 'Melde dich an, um deine Counter zu sehen.' : 'Leg ein Konto an, um loszulegen.'}
+            {mode === 'signIn'
+              ? 'Melde dich an, um deine Counter zu sehen.'
+              : 'Leg ein Konto an und starte deinen ersten Counter.'}
           </Text>
         </View>
 
@@ -149,6 +154,9 @@ const styles = StyleSheet.create({
   },
   title: {
     ...TYPOGRAPHY.largeTitle,
+  },
+  tagline: {
+    ...TYPOGRAPHY.subhead,
   },
   subtitle: {
     ...TYPOGRAPHY.subhead,

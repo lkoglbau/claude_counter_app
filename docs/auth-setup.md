@@ -12,9 +12,7 @@
 3. [ ] **Deutsche Mail-Vorlagen** eintragen (Abschnitt 4).
 4. [ ] **Testen** mit einer *neuen* Adresse: Registrieren → „Bestätige deine E-Mail“ → Link im selben Browser → App mit Willkommens-Modal. Außerdem Login mit unbestätigter Adresse → „Link erneut senden“.
 5. [ ] **iOS testen** (Dev-Build, `npx expo run:ios`): Google-Login, Passwort-Reset-Link öffnet die App.
-6. [ ] **Mergen:** `feature/auth-redesign` → `master`. Der Branch enthält auch `feature/onboarding-info`. Danach ggf. Release-Tag `v3.0`.
-
-Merge (6) geht auch schon vor 1–5, weil die App ohne E-Mail-Bestätigung voll funktioniert.
+6. [x] **Gemergt** in `master` am 24.09.2026, zusammen mit Onboarding und App-Redesign. Offen: ggf. Release-Tag `v3.0`.
 
 Diese Schritte lassen sich nicht aus dem Code erledigen. Ohne sie funktionieren Google-Login, E-Mail-Bestätigung und Passwort-Reset nicht.
 

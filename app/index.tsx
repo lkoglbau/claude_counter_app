@@ -114,7 +114,7 @@ export default function HomeScreen() {
               <StatChip icon="layers" label={`${counters.length} Counter`} />
               <StatChip
                 icon="award"
-                label={`Längste Serie: ${longestStreak} ${longestStreak === 1 ? 'Tag' : 'Tage'}`}
+                label={`Längste Streak: ${longestStreak} ${longestStreak === 1 ? 'Tag' : 'Tage'}`}
               />
             </View>
           )}
@@ -131,7 +131,7 @@ export default function HomeScreen() {
           ]}
         >
           <View style={styles.groupHeader}>
-            <Text style={[styles.groupTitle, { color: colors.text }]}>Deine Serien</Text>
+            <Text style={[styles.groupTitle, { color: colors.text }]}>Deine Streaks</Text>
             {counters.length > 0 && (
               <Text style={[styles.groupHint, { color: colors.textTertiary }]}>
                 Zum Löschen nach links wischen

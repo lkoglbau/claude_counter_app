@@ -12,7 +12,7 @@ type Props = {
 const BULLETS = [
   'Lege für jede Gewohnheit einen eigenen Counter an.',
   'Der Tage-Zähler läuft automatisch – seit dem Startdatum oder dem letzten Ausrutscher.',
-  'Ausrutscher passiert? Trag ihn ein, der Zähler startet neu – deine bisherige Serie bleibt in der Historie sichtbar.',
+  'Ausrutscher passiert? Trag ihn ein, der Zähler startet neu – deine bisherige Streak bleibt in der Historie sichtbar.',
   'Gib jedem Counter seine eigene Farbe, damit du ihn auf einen Blick erkennst.',
 ];
 

@@ -18,10 +18,9 @@ export function EmptyState() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: SPACING.xxxl,
+    paddingVertical: SPACING.xxxl,
+    paddingHorizontal: SPACING.xl,
     gap: SPACING.md,
   },
   title: {

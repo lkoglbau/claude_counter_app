@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
   action: {
     width: ACTION_WIDTH,
     flex: 1,
-    borderRadius: RADIUS.lg,
+    borderRadius: RADIUS.md,
     alignItems: 'center',
     justifyContent: 'center',
     gap: SPACING.xs,

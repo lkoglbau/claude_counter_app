@@ -27,6 +27,8 @@ import { useAuth } from '@/store/AuthProvider';
 import { SPACING, TYPOGRAPHY } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { confirmDestructive } from '@/utils/confirm';
+import { daysSince } from '@/utils/date';
+import { lastEventDate } from '@/utils/timeline';
 
 const BAR_HEIGHT = 48;
 // Scroll distance over which the large title hands over to the compact one.
@@ -80,6 +82,10 @@ export default function HomeScreen() {
   };
 
   const today = format(new Date(), 'EEEE, d. MMMM', { locale: de });
+  const longestStreak = counters.reduce(
+    (max, counter) => Math.max(max, daysSince(lastEventDate(counter))),
+    0,
+  );
   const topInset = insets.top + BAR_HEIGHT;
 
   return (
@@ -91,35 +97,67 @@ export default function HomeScreen() {
         contentContainerStyle={[
           styles.list,
           // Leave room so the last card can scroll clear of the floating button.
-          { paddingTop: topInset, paddingBottom: insets.bottom + FAB_GAP + FAB_SIZE + SPACING.xl },
-          counters.length === 0 && styles.listEmpty,
+          {
+            paddingTop: topInset,
+            paddingBottom: insets.bottom + FAB_GAP + FAB_SIZE + SPACING.xl,
+          },
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <Animated.View style={[styles.largeTitleBlock, largeTitleStyle]}>
-          <Text style={[styles.largeTitle, { color: colors.text }]}>Meine Counter</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{today}</Text>
+        <Animated.View style={[styles.hero, largeTitleStyle]}>
+          <Text style={[styles.date, { color: colors.textSecondary }]}>{today}</Text>
+          <Text accessibilityRole="header" style={[styles.largeTitle, { color: colors.text }]}>
+            Meine Counter
+          </Text>
+          {counters.length > 0 && (
+            <View style={styles.chips}>
+              <StatChip icon="layers" label={`${counters.length} Counter`} />
+              <StatChip
+                icon="award"
+                label={`Längste Serie: ${longestStreak} ${longestStreak === 1 ? 'Tag' : 'Tage'}`}
+              />
+            </View>
+          )}
         </Animated.View>
 
-        {counters.length === 0 ? (
-          <EmptyState />
-        ) : (
-          counters.map((counter) => (
-            <Animated.View
-              key={counter.id}
-              entering={FadeInDown.springify().damping(18)}
-              exiting={FadeOut.duration(180)}
-              layout={LinearTransition.springify().damping(18)}
-            >
-              <SwipeableRow itemName={counter.name} onDelete={() => removeCounter(counter.id)}>
-                <CounterCard
-                  counter={counter}
-                  onPress={() => router.push(`/counter/${counter.id}`)}
-                />
-              </SwipeableRow>
-            </Animated.View>
-          ))
-        )}
+        {/* All counters grouped on one surface. */}
+        <View
+          style={[
+            styles.group,
+            {
+              backgroundColor: colors.authSurface,
+              borderColor: colors.authBorder,
+            },
+          ]}
+        >
+          <View style={styles.groupHeader}>
+            <Text style={[styles.groupTitle, { color: colors.text }]}>Deine Serien</Text>
+            {counters.length > 0 && (
+              <Text style={[styles.groupHint, { color: colors.textTertiary }]}>
+                Zum Löschen nach links wischen
+              </Text>
+            )}
+          </View>
+          {counters.length === 0 ? (
+            <EmptyState />
+          ) : (
+            counters.map((counter) => (
+              <Animated.View
+                key={counter.id}
+                entering={FadeInDown.springify().damping(18)}
+                exiting={FadeOut.duration(180)}
+                layout={LinearTransition.springify().damping(18)}
+              >
+                <SwipeableRow itemName={counter.name} onDelete={() => removeCounter(counter.id)}>
+                  <CounterCard
+                    counter={counter}
+                    onPress={() => router.push(`/counter/${counter.id}`)}
+                  />
+                </SwipeableRow>
+              </Animated.View>
+            ))
+          )}
+        </View>
       </Animated.ScrollView>
 
       {/* Fixed top bar: sits below the status bar / Dynamic Island. */}
@@ -127,7 +165,11 @@ export default function HomeScreen() {
         pointerEvents="box-none"
         style={[
           styles.bar,
-          { height: topInset, paddingTop: insets.top, backgroundColor: colors.authBgTop },
+          {
+            height: topInset,
+            paddingTop: insets.top,
+            backgroundColor: colors.authBgTop,
+          },
         ]}
       >
         <Animated.Text
@@ -211,18 +253,62 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     ...TYPOGRAPHY.headline,
   },
-  largeTitleBlock: {
-    paddingTop: SPACING.sm,
-    paddingBottom: SPACING.md,
-    gap: SPACING.xs,
+  hero: {
+    alignItems: 'center',
+    paddingTop: SPACING.md,
+    paddingBottom: SPACING.lg,
+    gap: SPACING.sm,
+  },
+  date: {
+    ...TYPOGRAPHY.label,
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
   },
   largeTitle: {
-    ...TYPOGRAPHY.largeTitle,
-    fontSize: 36,
-    letterSpacing: 0.4,
+    fontSize: 32,
+    lineHeight: 38,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+    textAlign: 'center',
   },
-  subtitle: {
-    ...TYPOGRAPHY.subhead,
+  chips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    marginTop: SPACING.xs,
+  },
+  chip: {
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 1,
+    paddingHorizontal: SPACING.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  chipLabel: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  group: {
+    borderRadius: 28,
+    borderWidth: 1,
+    padding: SPACING.md,
+    gap: SPACING.md,
+  },
+  groupHeader: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    paddingHorizontal: SPACING.xs,
+    paddingTop: SPACING.xs,
+  },
+  groupTitle: {
+    ...TYPOGRAPHY.headline,
+  },
+  groupHint: {
+    fontSize: 12,
   },
   avatarButton: {
     marginLeft: 'auto',
@@ -244,7 +330,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.xl,
     gap: SPACING.lg,
   },
-  listEmpty: {
-    flexGrow: 1,
-  },
 });
+
+function StatChip({ icon, label }: { icon: 'layers' | 'award'; label: string }) {
+  const { colors } = useTheme();
+  return (
+    <View
+      style={[styles.chip, { borderColor: colors.authBorder, backgroundColor: colors.authSurface }]}
+    >
+      <Feather name={icon} size={13} color={colors.textSecondary} />
+      <Text style={[styles.chipLabel, { color: colors.textSecondary }]}>{label}</Text>
+    </View>
+  );
+}

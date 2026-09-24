@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { getSwatch } from '@/theme/palette';
-import { CARD_SHADOW, RADIUS, SPACING, TYPOGRAPHY } from '@/theme/tokens';
+import { RADIUS, SPACING, TYPOGRAPHY } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import type { Counter } from '@/types/counter';
 import { formatHumanDate } from '@/utils/date';
@@ -28,7 +28,6 @@ export function CounterCard({ counter, onPress }: Props) {
       onPress={onPress}
       style={({ pressed }) => [
         styles.card,
-        CARD_SHADOW,
         {
           backgroundColor: swatch.tint,
           borderColor: swatch.border,
@@ -57,7 +56,8 @@ export function CounterCard({ counter, onPress }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: RADIUS.lg,
+    // Concentric with the home screen's group card (28 radius, 12 padding).
+    borderRadius: RADIUS.md,
     borderWidth: StyleSheet.hairlineWidth,
     paddingVertical: SPACING.xl,
     paddingHorizontal: SPACING.xl,

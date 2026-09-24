@@ -134,12 +134,3 @@ export const TYPOGRAPHY = {
   label: { fontSize: 13, fontWeight: '600', letterSpacing: 0.1 },
   counter: { fontSize: 44, fontWeight: '700', letterSpacing: 0.5 },
 } as const;
-
-/** Soft, layered iOS-style card shadow. */
-export const CARD_SHADOW = {
-  shadowColor: '#000000',
-  shadowOpacity: 0.06,
-  shadowRadius: 12,
-  shadowOffset: { width: 0, height: 6 },
-  elevation: 2,
-} as const;

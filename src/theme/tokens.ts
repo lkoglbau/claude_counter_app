@@ -18,6 +18,21 @@ export type ThemeColors = {
   destructive: string;
   overlay: string;
   fieldBackground: string;
+  // Login / register / password-reset screens. Neutral black-grey palette,
+  // deliberately separate from the blue app tint.
+  authBgTop: string;
+  authBgBottom: string;
+  authSurface: string;
+  authSurfaceActive: string;
+  authInputBg: string;
+  authBorder: string;
+  authBorderFocus: string;
+  authTextPrimary: string;
+  authTextSecondary: string;
+  authButtonBg: string;
+  authButtonText: string;
+  authButtonDisabled: string;
+  authError: string;
 };
 
 const light: ThemeColors = {
@@ -34,6 +49,19 @@ const light: ThemeColors = {
   destructive: '#D64541',
   overlay: 'rgba(0,0,0,0.35)',
   fieldBackground: '#F4F4F6',
+  authBgTop: '#F5F5F7',
+  authBgBottom: '#E8E8ED',
+  authSurface: '#FFFFFF',
+  authSurfaceActive: '#E5E5EA',
+  authInputBg: '#FFFFFF',
+  authBorder: '#D1D1D6',
+  authBorderFocus: '#8E8E93',
+  authTextPrimary: '#0A0A0A',
+  authTextSecondary: '#6E6E73',
+  authButtonBg: '#0A0A0A',
+  authButtonText: '#F5F5F7',
+  authButtonDisabled: '#C7C7CC',
+  authError: '#D70015',
 };
 
 const dark: ThemeColors = {
@@ -50,6 +78,19 @@ const dark: ThemeColors = {
   destructive: '#FF6B67',
   overlay: 'rgba(0,0,0,0.55)',
   fieldBackground: '#1A1A1D',
+  authBgTop: '#1C1C1E',
+  authBgBottom: '#050505',
+  authSurface: '#1F1F22',
+  authSurfaceActive: '#3A3A3D',
+  authInputBg: 'rgba(255,255,255,0.03)',
+  authBorder: '#2C2C2E',
+  authBorderFocus: '#8E8E93',
+  authTextPrimary: '#F5F5F7',
+  authTextSecondary: '#8E8E93',
+  authButtonBg: '#F5F5F7',
+  authButtonText: '#0A0A0A',
+  authButtonDisabled: '#3A3A3D',
+  authError: '#FF6961',
 };
 
 export const COLORS: Record<ColorScheme, ThemeColors> = { light, dark };

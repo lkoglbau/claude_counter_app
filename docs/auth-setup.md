@@ -1,5 +1,21 @@
 # Auth-Setup: manuelle Schritte
 
+## Stand & offene Punkte (24.09.2026)
+
+**Erledigt:** Google Cloud (OAuth-Client), Google-Provider in Supabase, Redirect-URLs, Vercel-Env-Variablen. Google-Login, „Angemeldet bleiben“ und „Passwort vergessen“ funktionieren auf der Preview.
+
+**Bewusst verschoben: E-Mail-Bestätigung.** Supabase lässt „Confirm email“ nur mit eigenem SMTP speichern. Solange es aus ist, bestätigt Supabase neue Konten automatisch und die App loggt nach der Registrierung direkt ein. Der Screen `verify-email` erscheint dann nie. Der Code dafür ist fertig, es fehlt nur die Konfiguration.
+
+**Offen, in dieser Reihenfolge:**
+1. [ ] **SMTP einrichten** (Abschnitt 5): zum Testen Gmail mit App-Passwort (`smtp.gmail.com`, Port 465), für den Release Resend mit eigener Domain.
+2. [ ] **„Confirm email“ einschalten** (Abschnitt 2) und speichern.
+3. [ ] **Deutsche Mail-Vorlagen** eintragen (Abschnitt 4).
+4. [ ] **Testen** mit einer *neuen* Adresse: Registrieren → „Bestätige deine E-Mail“ → Link im selben Browser → App mit Willkommens-Modal. Außerdem Login mit unbestätigter Adresse → „Link erneut senden“.
+5. [ ] **iOS testen** (Dev-Build, `npx expo run:ios`): Google-Login, Passwort-Reset-Link öffnet die App.
+6. [ ] **Mergen:** `feature/auth-redesign` → `master`. Der Branch enthält auch `feature/onboarding-info`. Danach ggf. Release-Tag `v3.0`.
+
+Merge (6) geht auch schon vor 1–5, weil die App ohne E-Mail-Bestätigung voll funktioniert.
+
 Diese Schritte lassen sich nicht aus dem Code erledigen. Ohne sie funktionieren Google-Login, E-Mail-Bestätigung und Passwort-Reset nicht.
 
 `<project-ref>` ist die Supabase-Projekt-Ref (steht in `.mcp.json` bzw. in `EXPO_PUBLIC_SUPABASE_URL`). `<prod-domain>` ist die Vercel-Production-Domain.

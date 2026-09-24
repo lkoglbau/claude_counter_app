@@ -77,7 +77,11 @@ export function CounterForm({ initialValue, submitLabel, onSubmit, onDelete, hea
             onSubmitEditing={handleSubmit}
             style={[
               styles.input,
-              { backgroundColor: colors.fieldBackground, color: colors.text },
+              {
+                backgroundColor: colors.fieldBackground,
+                borderColor: colors.fieldBorder,
+                color: colors.text,
+              },
             ]}
           />
         </View>
@@ -97,7 +101,12 @@ export function CounterForm({ initialValue, submitLabel, onSubmit, onDelete, hea
             disabled={!canSubmit}
           />
           {onDelete && (
-            <PrimaryButton label="Counter löschen" variant="destructive" onPress={onDelete} />
+            <PrimaryButton
+              label="Counter löschen"
+              variant="destructive"
+              icon="trash-2"
+              onPress={onDelete}
+            />
           )}
         </View>
       </ScrollView>
@@ -114,14 +123,15 @@ const styles = StyleSheet.create({
     gap: SPACING.xxl,
   },
   field: {
-    gap: SPACING.md,
+    gap: SPACING.sm,
   },
   label: {
-    ...TYPOGRAPHY.body,
+    ...TYPOGRAPHY.label,
   },
   input: {
     minHeight: 52,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.field,
+    borderWidth: 1,
     paddingHorizontal: SPACING.lg,
     ...TYPOGRAPHY.body,
   },

@@ -1,15 +1,7 @@
 import { useEffect, useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { BottomSheet } from '@/components/BottomSheet';
 import { useCooldown } from '@/hooks/useCooldown';
 import { useAuth } from '@/store/AuthProvider';
 import { useTheme } from '@/theme/useTheme';
@@ -29,7 +21,6 @@ const SENT_MESSAGE = 'Falls ein Konto existiert, haben wir dir einen Link geschi
 
 export function ForgotPasswordSheet({ visible, initialEmail, onClose }: Props) {
   const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
   const { sendPasswordReset } = useAuth();
   const cooldown = useCooldown(60);
 
@@ -67,108 +58,57 @@ export function ForgotPasswordSheet({ visible, initialEmail, onClose }: Props) {
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <Pressable
-          style={[styles.backdrop, { backgroundColor: colors.overlay }]}
-          onPress={onClose}
-          accessibilityLabel="Schließen"
+    <BottomSheet visible={visible} onClose={onClose}>
+      <Text style={[styles.title, { color: colors.authTextPrimary }]}>
+        Passwort vergessen?
+      </Text>
+      <Text style={[styles.body, { color: colors.authTextSecondary }]}>
+        Gib deine E-Mail-Adresse ein. Wir schicken dir einen Link, mit dem du ein neues
+        Passwort festlegen kannst.
+      </Text>
+
+      <AuthTextField
+        icon="mail"
+        value={email}
+        onChangeText={setEmail}
+        onBlur={() => setTouched(true)}
+        placeholder="E-Mail-Adresse"
+        keyboardType="email-address"
+        autoCapitalize="none"
+        autoComplete="email"
+        textContentType="emailAddress"
+        returnKeyType="send"
+        onSubmitEditing={handleSend}
+        error={emailError}
+      />
+
+      {message && (
+        <Text style={[styles.body, styles.message, { color: colors.authTextPrimary }]}>
+          {message}
+        </Text>
+      )}
+      {error && (
+        <Text style={[styles.body, styles.message, { color: colors.authError }]}>
+          {error}
+        </Text>
+      )}
+
+      <View style={styles.button}>
+        <AuthButton
+          label={cooldown.active ? `Erneut senden (${cooldown.remaining} s)` : 'Link senden'}
+          onPress={handleSend}
+          loading={loading}
+          disabled={cooldown.active}
         />
-        <View
-          style={[
-            styles.sheet,
-            {
-              backgroundColor: colors.authBgTop,
-              borderColor: colors.authBorder,
-              paddingBottom: insets.bottom + 24,
-            },
-          ]}
-        >
-          <View style={styles.inner}>
-            <View style={[styles.handle, { backgroundColor: colors.authBorder }]} />
-            <Text style={[styles.title, { color: colors.authTextPrimary }]}>
-              Passwort vergessen?
-            </Text>
-            <Text style={[styles.body, { color: colors.authTextSecondary }]}>
-              Gib deine E-Mail-Adresse ein. Wir schicken dir einen Link, mit dem du ein neues
-              Passwort festlegen kannst.
-            </Text>
-
-            <AuthTextField
-              icon="mail"
-              value={email}
-              onChangeText={setEmail}
-              onBlur={() => setTouched(true)}
-              placeholder="E-Mail-Adresse"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoComplete="email"
-              textContentType="emailAddress"
-              returnKeyType="send"
-              onSubmitEditing={handleSend}
-              error={emailError}
-            />
-
-            {message && (
-              <Text style={[styles.body, styles.message, { color: colors.authTextPrimary }]}>
-                {message}
-              </Text>
-            )}
-            {error && (
-              <Text style={[styles.body, styles.message, { color: colors.authError }]}>
-                {error}
-              </Text>
-            )}
-
-            <View style={styles.button}>
-              <AuthButton
-                label={cooldown.active ? `Erneut senden (${cooldown.remaining} s)` : 'Link senden'}
-                onPress={handleSend}
-                loading={loading}
-                disabled={cooldown.active}
-              />
-            </View>
-            <Pressable accessibilityRole="button" onPress={onClose} style={styles.cancel}>
-              <Text style={[styles.cancelLabel, { color: colors.authTextPrimary }]}>Schließen</Text>
-            </Pressable>
-          </View>
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
+      </View>
+      <Pressable accessibilityRole="button" onPress={onClose} style={styles.cancel}>
+        <Text style={[styles.cancelLabel, { color: colors.authTextPrimary }]}>Schließen</Text>
+      </Pressable>
+    </BottomSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  backdrop: {
-    ...StyleSheet.absoluteFill,
-  },
-  sheet: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    borderWidth: 1,
-    borderBottomWidth: 0,
-    paddingHorizontal: 24,
-    paddingTop: 12,
-  },
-  inner: {
-    width: '100%',
-    maxWidth: 420,
-    alignSelf: 'center',
-  },
-  handle: {
-    alignSelf: 'center',
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    marginBottom: 20,
-  },
   title: {
     fontSize: 20,
     fontWeight: '600',

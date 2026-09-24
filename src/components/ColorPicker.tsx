@@ -53,8 +53,8 @@ export function ColorPicker({ label, value, onChange }: Props) {
 
 const styles = StyleSheet.create({
   label: {
-    ...TYPOGRAPHY.body,
-    marginBottom: SPACING.md,
+    ...TYPOGRAPHY.label,
+    marginBottom: SPACING.sm,
   },
   grid: {
     flexDirection: 'row',

@@ -1,12 +1,20 @@
+import Feather from '@expo/vector-icons/Feather';
+import type { ComponentProps } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
 
-import { RADIUS, SPACING, TYPOGRAPHY } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
 type Props = {
   label: string;
   onPress: () => void;
-  variant?: 'primary' | 'ghost' | 'destructive';
+  /**
+   * primary: filled pill (the one main action per screen)
+   * secondary: outlined pill for supporting actions
+   * destructive: muted red on a soft wash - deliberately calm, the confirm
+   *   dialog is what guards against accidents
+   */
+  variant?: 'primary' | 'secondary' | 'destructive';
+  icon?: ComponentProps<typeof Feather>['name'];
   disabled?: boolean;
   loading?: boolean;
 };
@@ -15,36 +23,55 @@ export function PrimaryButton({
   label,
   onPress,
   variant = 'primary',
+  icon,
   disabled = false,
   loading = false,
 }: Props) {
   const { colors } = useTheme();
+  const inactive = disabled || loading;
 
-  const isPrimary = variant === 'primary';
-  const isDestructive = variant === 'destructive';
-
-  const backgroundColor = isPrimary
-    ? colors.tint
-    : isDestructive
-      ? colors.destructive
-      : 'transparent';
-  const textColor = isPrimary || isDestructive ? colors.onTint : colors.tint;
+  const look = {
+    primary: {
+      backgroundColor: inactive ? colors.authButtonDisabled : colors.tint,
+      borderColor: 'transparent',
+      color: inactive ? colors.textSecondary : colors.onTint,
+    },
+    secondary: {
+      backgroundColor: 'transparent',
+      borderColor: colors.fieldBorder,
+      color: colors.text,
+    },
+    destructive: {
+      backgroundColor: colors.destructiveSoft,
+      borderColor: 'transparent',
+      color: colors.destructive,
+    },
+  }[variant];
 
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityState={{ disabled: disabled || loading }}
-      disabled={disabled || loading}
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: inactive, busy: loading }}
+      disabled={inactive}
       onPress={onPress}
       style={({ pressed }) => [
         styles.base,
-        { backgroundColor, opacity: disabled ? 0.4 : pressed ? 0.85 : 1 },
+        {
+          backgroundColor: look.backgroundColor,
+          borderColor: look.borderColor,
+          opacity: variant !== 'primary' && disabled ? 0.5 : 1,
+          transform: [{ scale: pressed ? 0.98 : 1 }],
+        },
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={textColor} />
+        <ActivityIndicator color={look.color} />
       ) : (
-        <Text style={[styles.label, { color: textColor }]}>{label}</Text>
+        <>
+          {icon && <Feather name={icon} size={18} color={look.color} />}
+          <Text style={[styles.label, { color: look.color }]}>{label}</Text>
+        </>
       )}
     </Pressable>
   );
@@ -52,13 +79,17 @@ export function PrimaryButton({
 
 const styles = StyleSheet.create({
   base: {
-    minHeight: 52,
-    borderRadius: RADIUS.md,
-    paddingHorizontal: SPACING.xl,
+    height: 54,
+    borderRadius: 27,
+    borderWidth: 1,
+    paddingHorizontal: 24,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 8,
   },
   label: {
-    ...TYPOGRAPHY.headline,
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

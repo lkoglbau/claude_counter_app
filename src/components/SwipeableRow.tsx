@@ -1,3 +1,4 @@
+import Feather from '@expo/vector-icons/Feather';
 import * as Haptics from 'expo-haptics';
 import { useRef } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -18,7 +19,7 @@ type Props = {
 const ACTION_WIDTH = 92;
 
 /**
- * iOS-style swipe-to-delete. Swiping left reveals a red action; tapping it (or a
+ * iOS-style swipe-to-delete. Swiping left reveals a (muted) red action; tapping it (or a
  * full swipe) asks for confirmation before the parent actually deletes.
  */
 export function SwipeableRow({ children, itemName, onDelete }: Props) {
@@ -53,10 +54,11 @@ export function SwipeableRow({ children, itemName, onDelete }: Props) {
         onPress={confirmDelete}
         style={({ pressed }) => [
           styles.action,
-          { backgroundColor: colors.destructive, opacity: pressed ? 0.85 : 1 },
+          { backgroundColor: colors.destructiveSoft, opacity: pressed ? 0.7 : 1 },
         ]}
       >
-        <Text style={[styles.actionLabel, { color: colors.onTint }]}>Löschen</Text>
+        <Feather name="trash-2" size={20} color={colors.destructive} />
+        <Text style={[styles.actionLabel, { color: colors.destructive }]}>Löschen</Text>
       </Pressable>
     </View>
   );
@@ -85,6 +87,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.lg,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: SPACING.xs,
   },
   actionLabel: {
     ...TYPOGRAPHY.footnote,

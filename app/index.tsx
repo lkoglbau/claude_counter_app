@@ -1,8 +1,11 @@
+import Feather from '@expo/vector-icons/Feather';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   FadeInDown,
   FadeOut,
@@ -15,25 +18,30 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AccountSheet, Avatar } from '@/components/AccountSheet';
 import { CounterCard } from '@/components/CounterCard';
 import { EmptyState } from '@/components/EmptyState';
 import { SwipeableRow } from '@/components/SwipeableRow';
 import { useCounters } from '@/hooks/useCounters';
 import { useAuth } from '@/store/AuthProvider';
-import { RADIUS, SPACING, TYPOGRAPHY } from '@/theme/tokens';
+import { SPACING, TYPOGRAPHY } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { confirmDestructive } from '@/utils/confirm';
 
 const BAR_HEIGHT = 48;
 // Scroll distance over which the large title hands over to the compact one.
 const COLLAPSE_START = 24;
 const COLLAPSE_END = 64;
+const FAB_SIZE = 64;
+const FAB_GAP = 20; // FAB distance from the bottom safe area
 
 export default function HomeScreen() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { counters, removeCounter } = useCounters();
-  const { signOut } = useAuth();
+  const { user, signOut } = useAuth();
+  const [accountOpen, setAccountOpen] = useState(false);
 
   const scrollY = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler((event) => {
@@ -56,22 +64,34 @@ export default function HomeScreen() {
   }));
 
   const openNew = () => {
-    Haptics.selectionAsync();
+    if (Platform.OS !== 'web') Haptics.selectionAsync();
     router.push('/counter/new');
+  };
+
+  const handleSignOut = async () => {
+    const confirmed = await confirmDestructive({
+      title: 'Abmelden?',
+      message: 'Deine Counter bleiben gespeichert. Du kannst dich jederzeit wieder anmelden.',
+      confirmLabel: 'Abmelden',
+    });
+    if (!confirmed) return;
+    setAccountOpen(false);
+    await signOut();
   };
 
   const today = format(new Date(), 'EEEE, d. MMMM', { locale: de });
   const topInset = insets.top + BAR_HEIGHT;
 
   return (
-    <View style={[styles.screen, { backgroundColor: colors.background }]}>
+    <LinearGradient colors={[colors.authBgTop, colors.authBgBottom]} style={styles.screen}>
       <Animated.ScrollView
         onScroll={onScroll}
         scrollEventThrottle={16}
         contentInsetAdjustmentBehavior="never"
         contentContainerStyle={[
           styles.list,
-          { paddingTop: topInset, paddingBottom: insets.bottom + SPACING.xxl },
+          // Leave room so the last card can scroll clear of the floating button.
+          { paddingTop: topInset, paddingBottom: insets.bottom + FAB_GAP + FAB_SIZE + SPACING.xl },
           counters.length === 0 && styles.listEmpty,
         ]}
         showsVerticalScrollIndicator={false}
@@ -107,19 +127,9 @@ export default function HomeScreen() {
         pointerEvents="box-none"
         style={[
           styles.bar,
-          { height: topInset, paddingTop: insets.top, backgroundColor: colors.background },
+          { height: topInset, paddingTop: insets.top, backgroundColor: colors.authBgTop },
         ]}
       >
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Abmelden"
-          onPress={() => signOut()}
-          hitSlop={10}
-          style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
-        >
-          <Text style={[styles.logoutLabel, { color: colors.textSecondary }]}>Abmelden</Text>
-        </Pressable>
-
         <Animated.Text
           pointerEvents="none"
           style={[styles.compactTitle, { color: colors.text, top: insets.top }, compactTitleStyle]}
@@ -129,14 +139,12 @@ export default function HomeScreen() {
 
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Neuen Counter anlegen"
-          onPress={openNew}
-          style={({ pressed }) => [
-            styles.addButton,
-            { backgroundColor: colors.tint, opacity: pressed ? 0.85 : 1 },
-          ]}
+          accessibilityLabel="Konto"
+          onPress={() => setAccountOpen(true)}
+          hitSlop={6}
+          style={({ pressed }) => [styles.avatarButton, { opacity: pressed ? 0.7 : 1 }]}
         >
-          <Text style={[styles.addGlyph, { color: colors.onTint }]}>+</Text>
+          <Avatar user={user} size={36} />
         </Pressable>
 
         <Animated.View
@@ -144,7 +152,32 @@ export default function HomeScreen() {
           style={[styles.barSeparator, { backgroundColor: colors.separator }, barSeparatorStyle]}
         />
       </View>
-    </View>
+
+      {/* Primary action floats bottom-center, within thumb reach. */}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Neuen Counter anlegen"
+        onPress={openNew}
+        style={({ pressed }) => [
+          styles.fab,
+          {
+            bottom: insets.bottom + FAB_GAP,
+            backgroundColor: colors.tint,
+            shadowColor: colors.overlay,
+            transform: [{ scale: pressed ? 0.94 : 1 }],
+          },
+        ]}
+      >
+        <Feather name="plus" size={28} color={colors.onTint} />
+      </Pressable>
+
+      <AccountSheet
+        visible={accountOpen}
+        user={user}
+        onClose={() => setAccountOpen(false)}
+        onSignOut={handleSignOut}
+      />
+    </LinearGradient>
   );
 }
 
@@ -191,20 +224,21 @@ const styles = StyleSheet.create({
   subtitle: {
     ...TYPOGRAPHY.subhead,
   },
-  logoutLabel: {
-    ...TYPOGRAPHY.subhead,
+  avatarButton: {
+    marginLeft: 'auto',
   },
-  addButton: {
-    width: 36,
-    height: 36,
-    borderRadius: RADIUS.pill,
+  fab: {
+    position: 'absolute',
+    alignSelf: 'center',
+    width: FAB_SIZE,
+    height: FAB_SIZE,
+    borderRadius: FAB_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  addGlyph: {
-    fontSize: 24,
-    fontWeight: '400',
-    marginTop: -2,
+    shadowOpacity: 1,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6,
   },
   list: {
     paddingHorizontal: SPACING.xl,

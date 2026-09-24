@@ -92,7 +92,8 @@ export default function EditCounterScreen() {
       <StreakTimeline counter={counter} onPressSlip={setSheet} />
       <PrimaryButton
         label="Ausrutscher hinzufügen"
-        variant="ghost"
+        variant="secondary"
+        icon="plus"
         onPress={() => setSheet(null)}
       />
     </View>

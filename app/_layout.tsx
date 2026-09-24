@@ -10,13 +10,11 @@ import { AuthProvider, useAuth } from '@/store/AuthProvider';
 import { CountersProvider } from '@/store/CountersProvider';
 import { useTheme } from '@/theme/useTheme';
 
-import LoginScreen from './login';
-
 SplashScreen.preventAutoHideAsync();
 
 function AppShell() {
   const { colors, scheme } = useTheme();
-  const { session, loading, showOnboarding, dismissOnboarding } = useAuth();
+  const { session, loading, isRecovering, showOnboarding, dismissOnboarding } = useAuth();
 
   useEffect(() => {
     if (!loading) {
@@ -28,15 +26,10 @@ function AppShell() {
     return null;
   }
 
-  if (!session) {
-    return (
-      <>
-        <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
-        <LoginScreen />
-      </>
-    );
-  }
+  const signedIn = !!session && !isRecovering;
 
+  // Screen order matters: when a guard flips, expo-router falls back to the
+  // first screen that's still reachable (index when signed in, else login).
   return (
     <CountersProvider>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
@@ -49,17 +42,28 @@ function AppShell() {
           headerTitleStyle: { color: colors.text },
         }}
       >
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="counter/new"
-          options={{ presentation: 'modal', title: 'Neuer Counter' }}
-        />
-        <Stack.Screen
-          name="counter/[id]"
-          options={{ presentation: 'modal', title: 'Counter bearbeiten' }}
-        />
+        <Stack.Protected guard={signedIn}>
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="counter/new"
+            options={{ presentation: 'modal', title: 'Neuer Counter' }}
+          />
+          <Stack.Screen
+            name="counter/[id]"
+            options={{ presentation: 'modal', title: 'Counter bearbeiten' }}
+          />
+        </Stack.Protected>
+        <Stack.Protected guard={!session}>
+          <Stack.Screen name="login" options={{ headerShown: false, animation: 'fade' }} />
+          <Stack.Screen name="verify-email" options={{ headerShown: false }} />
+        </Stack.Protected>
+        {/* Reachable in every state: they're where email links and OAuth land. */}
+        <Stack.Screen name="reset-password" options={{ headerShown: false }} />
+        <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
       </Stack>
-      <OnboardingInfoModal visible={showOnboarding} onClose={dismissOnboarding} />
+      {signedIn && (
+        <OnboardingInfoModal visible={showOnboarding} onClose={dismissOnboarding} />
+      )}
     </CountersProvider>
   );
 }

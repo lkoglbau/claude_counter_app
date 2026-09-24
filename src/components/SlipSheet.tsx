@@ -74,7 +74,7 @@ export function SlipSheet({ visible, counter, slip, onClose, onSave, onDelete }:
             {slip ? 'Ausrutscher bearbeiten' : 'Ausrutscher hinzufügen'}
           </Text>
           <Pressable accessibilityRole="button" onPress={onClose} hitSlop={12}>
-            <Text style={[styles.close, { color: colors.tint }]}>Abbrechen</Text>
+            <Text style={[styles.close, { color: colors.textSecondary }]}>Abbrechen</Text>
           </Pressable>
         </View>
 
@@ -110,7 +110,11 @@ export function SlipSheet({ visible, counter, slip, onClose, onSave, onDelete }:
                 onSubmitEditing={handleSave}
                 style={[
                   styles.input,
-                  { backgroundColor: colors.fieldBackground, color: colors.text },
+                  {
+                    backgroundColor: colors.fieldBackground,
+                    borderColor: colors.fieldBorder,
+                    color: colors.text,
+                  },
                 ]}
               />
             </View>
@@ -130,6 +134,7 @@ export function SlipSheet({ visible, counter, slip, onClose, onSave, onDelete }:
                 <PrimaryButton
                   label="Ausrutscher löschen"
                   variant="destructive"
+                  icon="trash-2"
                   onPress={onDelete}
                 />
               )}
@@ -155,11 +160,12 @@ const styles = StyleSheet.create({
   title: { ...TYPOGRAPHY.headline },
   close: { ...TYPOGRAPHY.body },
   content: { padding: SPACING.xl, gap: SPACING.xxl },
-  field: { gap: SPACING.md },
-  label: { ...TYPOGRAPHY.body },
+  field: { gap: SPACING.sm },
+  label: { ...TYPOGRAPHY.label },
   input: {
     minHeight: 52,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.field,
+    borderWidth: 1,
     paddingHorizontal: SPACING.lg,
     ...TYPOGRAPHY.body,
   },

@@ -10,6 +10,7 @@ import {
 
 import type { Counter, CounterDraft, Slip, SlipDraft } from '@/types/counter';
 import { createId } from '@/utils/id';
+import { useAuth } from './AuthProvider';
 import {
   deleteCounterRow,
   deleteSlipRow,
@@ -46,12 +47,24 @@ function sortCounters(list: Counter[]): Counter[] {
 export function CountersProvider({ children }: { children: ReactNode }) {
   const [counters, setCounters] = useState<Counter[]>([]);
 
-  // Initial hydration from Supabase — async, so the list starts empty for one frame.
+  const userId = useAuth().user?.id ?? null;
+
+  // Hydration from Supabase — async, so the list starts empty for one frame.
+  // The provider stays mounted across sign-in/out (it wraps the whole stack),
+  // so reload whenever the user changes and drop the previous user's data.
   useEffect(() => {
+    setCounters([]);
+    if (!userId) return;
+    let cancelled = false;
     fetchCounters()
-      .then((loaded) => setCounters(sortCounters(loaded)))
+      .then((loaded) => {
+        if (!cancelled) setCounters(sortCounters(loaded));
+      })
       .catch((error) => console.error('Failed to load counters from Supabase', error));
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
 
   const getCounter = useCallback(
     (id: string) => counters.find((c) => c.id === id),

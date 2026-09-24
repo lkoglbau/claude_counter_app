@@ -37,7 +37,10 @@ export function DateField({ label, value, onChange, minimumDate }: Props) {
   if (Platform.OS === 'web') {
     return (
       <View
-        style={[styles.row, { backgroundColor: colors.fieldBackground }]}
+        style={[
+          styles.row,
+          { backgroundColor: colors.fieldBackground, borderColor: colors.fieldBorder },
+        ]}
         accessibilityLabel={`${label}: ${formatHumanDate(value)}`}
       >
         {createElement('input', {
@@ -80,10 +83,14 @@ export function DateField({ label, value, onChange, minimumDate }: Props) {
         onPress={toggle}
         style={({ pressed }) => [
           styles.row,
-          { backgroundColor: colors.fieldBackground, opacity: pressed ? 0.7 : 1 },
+          {
+            backgroundColor: colors.fieldBackground,
+            borderColor: open ? colors.controlAccent : colors.fieldBorder,
+            opacity: pressed ? 0.7 : 1,
+          },
         ]}
       >
-        <Text style={[styles.value, { color: open ? colors.tint : colors.text }]}>
+        <Text style={[styles.value, { color: colors.text }]}>
           {formatHumanDate(value)}
         </Text>
         <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>
@@ -99,7 +106,8 @@ export function DateField({ label, value, onChange, minimumDate }: Props) {
             minimumDate={minimumDate ? fromISODate(minimumDate) : undefined}
             onChange={handleChange}
             themeVariant={scheme}
-            accentColor={colors.tint}
+            // tint is near-white/black and would hide the selected day's number.
+            accentColor={colors.controlAccent}
           />
         </View>
       )}
@@ -110,7 +118,8 @@ export function DateField({ label, value, onChange, minimumDate }: Props) {
 const styles = StyleSheet.create({
   row: {
     minHeight: 52,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.field,
+    borderWidth: 1,
     paddingHorizontal: SPACING.lg,
     flexDirection: 'row',
     alignItems: 'center',

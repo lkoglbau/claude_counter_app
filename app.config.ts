@@ -27,10 +27,8 @@ const config: ExpoConfig = {
   android: {
     package: 'com.lenakoglbauer.dayssince',
     adaptiveIcon: {
-      foregroundImage: './assets/android-icon-foreground.png',
-      backgroundImage: './assets/android-icon-background.png',
-      monochromeImage: './assets/android-icon-monochrome.png',
-      backgroundColor: '#FFFFFF',
+      foregroundImage: './assets/adaptive-icon.png',
+      backgroundColor: '#151517',
     },
   },
   web: {
@@ -44,10 +42,7 @@ const config: ExpoConfig = {
       {
         image: './assets/splash-icon.png',
         resizeMode: 'contain',
-        backgroundColor: '#FFFFFF',
-        dark: {
-          backgroundColor: '#000000',
-        },
+        backgroundColor: '#151517',
       },
     ],
   ],
